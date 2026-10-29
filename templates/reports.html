@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Reports</h1>
+    <p>Sales summary and low-stock overview.</p>
+  </div>
+</header>
+
+<section class="card">
+  <form method="GET" class="search-bar">
+    <label>From</label>
+    <input type="date" name="start" value="{{ start }}" />
+    <label>To</label>
+    <input type="date" name="end" value="{{ end }}" />
+    <button class="btn btn-primary" type="submit">Filter</button>
+  </form>
+
+  <div class="report-summary">
+    <div class="card stat inline">
+      <div>
+        <div class="stat-label">Total Sales</div>
+        <div class="stat-value">₱{{ '%.2f'|format(totals.t) }}</div>
+      </div>
+    </div>
+    <div class="card stat inline">
+      <div>
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">{{ totals.c }}</div>
+      </div>
+    </div>
+    <div class="card stat inline">
+      <div>
+        <div class="stat-label">Average per Sale</div>
+        <div class="stat-value">₱{{ '%.2f'|format(totals.t / totals.c if totals.c else 0) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Sales Transactions</h2>
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Date</th><th>Cashier</th><th>Total</th><th>Paid</th><th>Change</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>#{{ r.sale_id }}</td>
+        <td>{{ r.sale_date[:16].replace('T',' ') }}</td>
+        <td>{{ r.username }}</td>
+        <td>₱{{ r.total_amount }}</td>
+        <td>₱{{ r.amount_paid }}</td>
+        <td>₱{{ r.change_amount }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="empty">No transactions in this range.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:2rem">Low Stock Products</h2>
+  <table class="table">
+    <thead><tr><th>Code</th><th>Product</th><th>Stock</th><th>Reorder</th></tr></thead>
+    <tbody>
+      {% for p in low %}
+      <tr>
+        <td><code>{{ p.product_code }}</code></td>
+        <td>{{ p.name }}</td>
+        <td><span class="pill pill-warn">{{ p.stock_quantity }}</span></td>
+        <td>{{ p.reorder_level }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">All products are sufficiently stocked.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Welcome back, {{ session.username }}. Here's a snapshot of today's activity.</p>
+  </div>
+</header>
+
+<section class="cards">
+  <div class="card stat">
+    <div class="stat-label">Active Products</div>
+    <div class="stat-value">{{ stats.product_count }}</div>
+    <div class="stat-icon blue">▣</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-label">Low Stock Items</div>
+    <div class="stat-value {% if stats.low_stock > 0 %}warn{% endif %}">{{ stats.low_stock }}</div>
+    <div class="stat-icon orange">⚠</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-label">Today's Sales</div>
+    <div class="stat-value">₱{{ '%.2f'|format(stats.today_sales) }}</div>
+    <div class="stat-icon green">₱</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-label">Today's Transactions</div>
+    <div class="stat-value">{{ stats.today_txn }}</div>
+    <div class="stat-icon purple">✓</div>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      <h2>Low Stock Alerts</h2>
+      <a href="{{ url_for('inventory') if session.role=='admin' else '#' }}" class="link">View all</a>
+    </div>
+    {% if low %}
+      <table class="table">
+        <thead><tr><th>Code</th><th>Product</th><th>Stock</th><th>Reorder At</th></tr></thead>
+        <tbody>
+          {% for p in low %}
+          <tr>
+            <td><code>{{ p.product_code }}</code></td>
+            <td>{{ p.name }}</td>
+            <td><span class="pill pill-warn">{{ p.stock_quantity }}</span></td>
+            <td>{{ p.reorder_level }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">✓ All products are sufficiently stocked.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Recent Transactions</h2>
+      <a href="{{ url_for('reports') if session.role=='admin' else '#' }}" class="link">Reports</a>
+    </div>
+    {% if recent %}
+      <table class="table">
+        <thead><tr><th>#</th><th>Date</th><th>Cashier</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for s in recent %}
+          <tr>
+            <td>#{{ s.sale_id }}</td>
+            <td>{{ s.sale_date[:16].replace('T',' ') }}</td>
+            <td>{{ s.username }}</td>
+            <td>₱{{ s.total_amount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">No transactions yet.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

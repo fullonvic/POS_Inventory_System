@@ -1,0 +1,67 @@
+# 🛒 InventoPOS — Point of Sale & Inventory Management System
+
+A desktop-style web application built with **Python (Flask)** and **SQLite** for
+small retail businesses. It handles product inventory, point-of-sale
+transactions, stock tracking, receipts, and sales reports — all in a clean,
+modern interface.
+
+Built as a school project demonstrating **Python programming, database design,
+input validation, transactional integrity, and testing**.
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication & Roles
+- Secure login with hashed passwords (`werkzeug.security`)
+- Two roles: **Admin** and **Cashier**
+- Role-based access control (cashiers cannot access inventory/reports)
+- Deactivated accounts are denied access
+
+### 📦 Inventory Management (Admin)
+- Add new products with unique product codes
+- Edit product name, price, stock, and reorder level
+- Restock products (auto-logged as a stock movement)
+- Search products by name or code
+- Deactivate products without deleting sales history
+- Automatic **low-stock alerts** when quantity ≤ reorder level
+
+### 💰 Point of Sale (Admin & Cashier)
+- Live product search with debounced filtering
+- Click-to-add cart with quantity controls
+- Real-time total and change calculation
+- **Atomic checkout** — sale, line items, and stock deductions commit together or roll back entirely
+- Printable receipt modal with sale #, cashier, items, totals
+- Validates: empty cart, invalid quantity, insufficient stock, insufficient payment
+
+### 📊 Reports (Admin)
+- Sales transactions filtered by date range
+- Total sales, transaction count, and average-per-sale
+- Low-stock product list
+- Historical receipts preserve original unit prices even after product price changes
+
+### ✅ Validation (3 layers)
+1. **UI** — required fields, numeric input types, `min`/`step` attributes
+2. **Business logic** — `validate_product()` and stock/payment checks in the backend
+3. **Database** — `NOT NULL`, `UNIQUE`, `CHECK`, and `FOREIGN KEY` constraints
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer            | Technology                      |
+| ---------------- | ------------------------------- |
+| Language         | Python 3.12                     |
+| Web framework    | Flask 3.0                       |
+| Database         | SQLite 3 (via `sqlite3`)        |
+| Templating       | Jinja2                          |
+| Money math       | Python `Decimal`                |
+| Passwords        | `werkzeug.security`             |
+| Frontend         | HTML5, CSS3 (custom), Vanilla JS |
+| Dev tools        | VS Code / PowerShell            |
+
+---
+
+Account	Password	Lands on
+admin	admin123	Dashboard with all 4 nav items
+cashier	cashier123	Dashboard with only Dashboard + POS

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Login — InventoPOS{% endblock %}
+{% block auth_content %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-logo big">POS</div>
+      <h1>InventoPOS</h1>
+      <p>Point of Sale & Inventory Management</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="Enter username" autofocus required />
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" required />
+      <button type="submit" class="btn btn-primary full">Sign In</button>
+    </form>
+    
+    </div>
+  </div>
+</div>
+{% endblock %}

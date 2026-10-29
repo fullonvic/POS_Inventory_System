@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{% block title %}POS System{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+{% if session.user_id %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">POS</div>
+      <div>
+        <div class="brand-name">InventoPOS</div>
+        <div class="brand-sub">Inventory &amp; Sales</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+        <span class="ico">&#9638;</span> Dashboard
+      </a>
+      {% if session.role == 'admin' %}
+      <a href="{{ url_for('inventory') }}" class="nav-item {% if request.endpoint=='inventory' %}active{% endif %}">
+        <span class="ico">&#9635;</span> Inventory
+      </a>
+      {% endif %}
+      <a href="{{ url_for('pos') }}" class="nav-item {% if request.endpoint=='pos' %}active{% endif %}">
+        <span class="ico">&#8369;</span> Point of Sale
+      </a>
+      {% if session.role == 'admin' %}
+      <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint=='reports' %}active{% endif %}">
+        <span class="ico">&#9636;</span> Reports
+      </a>
+      {% endif %}
+    </nav>
+    <div class="user-box">
+      <div class="avatar">{{ session.username[0]|upper }}</div>
+      <div>
+        <div class="user-name">{{ session.username }}</div>
+        <div class="user-role">{{ session.role|capitalize }}</div>
+      </div>
+      <button type="button" class="logout" title="Logout" onclick="openLogoutModal()">&#9211;</button>
+    </div>
+  </aside>
+  <main class="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap">
+          {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="modal">
+  <div class="modal-content logout-modal">
+    <div class="logout-icon">&#9211;</div>
+    <h2>Log out?</h2>
+    <p class="muted">You'll be signed out of InventoPOS. Any unsaved cart items will be lost.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeModal('logoutModal')">Cancel</button>
+      <a href="{{ url_for('logout') }}" class="btn btn-primary">Yes, log out</a>
+    </div>
+  </div>
+</div>
+
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+  function openLogoutModal() { openModal('logoutModal'); }
+  // Close on backdrop click
+  document.getElementById('logoutModal').addEventListener('click', (e) => {
+    if (e.target.id === 'logoutModal') closeModal('logoutModal');
+  });
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal('logoutModal');
+  });
+</script>
+</body>
+</html>

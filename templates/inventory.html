@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Inventory Management</h1>
+    <p>Add, edit, restock, or deactivate products.</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addModal')">+ Add Product</button>
+</header>
+
+<section class="card">
+  <form method="GET" class="search-bar">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by product name or code..." />
+    <button class="btn btn-secondary" type="submit">Search</button>
+    {% if q %}<a class="btn btn-ghost" href="{{ url_for('inventory') }}">Clear</a>{% endif %}
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr><th>Code</th><th>Product</th><th>Price</th><th>Stock</th><th>Reorder</th><th>Status</th><th class="right">Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td><code>{{ p.product_code }}</code></td>
+        <td>{{ p.name }}</td>
+        <td>₱{{ p.price }}</td>
+        <td>
+          {% if p.stock_quantity <= p.reorder_level %}
+            <span class="pill pill-warn">{{ p.stock_quantity }}</span>
+          {% else %}
+            <span class="pill pill-ok">{{ p.stock_quantity }}</span>
+          {% endif %}
+        </td>
+        <td>{{ p.reorder_level }}</td>
+        <td><span class="pill pill-active">Active</span></td>
+        <td class="right">
+          <button class="btn btn-sm" onclick='openEdit({{ p|tojson }})'>Edit</button>
+          <button class="btn btn-sm btn-warn" onclick='openRestock({{ p|tojson }})'>Restock</button>
+          <form method="POST" action="{{ url_for('deactivate', pid=p.product_id) }}" style="display:inline" onsubmit="return confirm('Deactivate this product?')">
+            <button class="btn btn-sm btn-danger">Deactivate</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">No products found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- Add Modal -->
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <h2>Add Product</h2>
+    <form method="POST" action="{{ url_for('add_product') }}">
+      <label>Product Code</label>
+      <input name="product_code" required maxlength="20" />
+      <label>Product Name</label>
+      <input name="name" required maxlength="80" />
+      <label>Price (₱)</label>
+      <input name="price" type="number" step="0.01" min="0.01" required />
+      <div class="row-2">
+        <div>
+          <label>Initial Stock</label>
+          <input name="stock" type="number" min="0" value="0" required />
+        </div>
+        <div>
+          <label>Reorder Level</label>
+          <input name="reorder_level" type="number" min="0" value="5" required />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h2>Edit Product</h2>
+    <form method="POST" id="editForm">
+      <label>Product Code</label>
+      <input id="editCode" disabled />
+      <label>Product Name</label>
+      <input id="editName" name="name" required maxlength="80" />
+      <label>Price (₱)</label>
+      <input id="editPrice" name="price" type="number" step="0.01" min="0.01" required />
+      <div class="row-2">
+        <div>
+          <label>Stock</label>
+          <input id="editStock" name="stock" type="number" min="0" required />
+        </div>
+        <div>
+          <label>Reorder Level</label>
+          <input id="editReorder" name="reorder_level" type="number" min="0" required />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Restock Modal -->
+<div id="restockModal" class="modal">
+  <div class="modal-content">
+    <h2>Restock Product</h2>
+    <p id="restockName" class="muted"></p>
+    <form method="POST" id="restockForm">
+      <label>Quantity to Add</label>
+      <input name="quantity" type="number" min="1" required />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('restockModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEdit(p) {
+  document.getElementById('editForm').action = '/inventory/edit/' + p.product_id;
+  document.getElementById('editCode').value = p.product_code;
+  document.getElementById('editName').value = p.name;
+  document.getElementById('editPrice').value = p.price;
+  document.getElementById('editStock').value = p.stock_quantity;
+  document.getElementById('editReorder').value = p.reorder_level;
+  openModal('editModal');
+}
+function openRestock(p) {
+  document.getElementById('restockForm').action = '/inventory/restock/' + p.product_id;
+  document.getElementById('restockName').textContent = p.name + ' — current stock: ' + p.stock_quantity;
+  openModal('restockModal');
+}
+</script>
+{% endblock %}
