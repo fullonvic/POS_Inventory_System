@@ -76,10 +76,12 @@ body {
 .nav-item.active { background: var(--primary); color: white; }
 .ico { font-size: 16px; width: 18px; text-align: center; }
 
+/* ---------- User box (Enhanced) ---------- */
 .user-box {
   display: flex; align-items: center; gap: 10px;
   padding: 16px 20px;
   border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: auto;
 }
 .avatar {
   width: 36px; height: 36px;
@@ -87,18 +89,55 @@ body {
   border-radius: 50%;
   display: grid; place-items: center;
   font-weight: 700; color: white;
+  flex-shrink: 0;
 }
-.user-name { color: white; font-weight: 600; font-size: 13px; }
+.user-meta { min-width: 0; flex: 1; }
+.user-name {
+  color: white; font-weight: 600; font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .user-role { font-size: 11px; color: #94a3b8; }
+
 .logout {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
   color: #94a3b8;
-  text-decoration: none;
-  font-size: 16px;
-  padding: 6px;
-  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .1s ease;
 }
-.logout:hover { color: white; background: rgba(255,255,255,.05); }
+.logout:hover {
+  background-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+.logout:active { transform: scale(0.95); }
+.logout:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+.logout svg { display: block; }
+
+/* ---------- Modal header icon ---------- */
+.logout-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-radius: 50%;
+}
 
 .main { flex: 1; padding: 32px; overflow-x: auto; }
 
@@ -299,7 +338,7 @@ input:focus, select:focus { outline: none; border-color: var(--primary); box-sha
   width: 100%;
   max-width: 420px;
   box-shadow: var(--shadow-lg);
-}git status
+}
 .login-brand { text-align: center; margin-bottom: 28px; }
 .login-brand h1 { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
 .login-brand p { color: var(--muted); font-size: 13px; margin-top: 4px; }
@@ -424,4 +463,4 @@ input:focus, select:focus { outline: none; border-color: var(--primary); box-sha
   .receipt, .receipt * { visibility: visible; }
   .receipt { position: fixed; top: 0; left: 0; right: 0; padding: 20px; }
   .modal-actions { display: none; }
-}
+}   
