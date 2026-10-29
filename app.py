@@ -124,8 +124,57 @@ def dashboard():
            FROM sales s JOIN users u ON u.user_id = s.user_id
            ORDER BY s.sale_id DESC LIMIT 6"""
     ).fetchall()
+
+    # ---------- CHART DATA ----------
+    daily_rows = conn.execute(
+        """SELECT date(sale_date) d,
+                  COALESCE(SUM(CAST(total_amount AS REAL)),0) total,
+                  COUNT(*) cnt
+           FROM sales
+           WHERE date(sale_date) >= date('now','localtime','-6 days')
+           GROUP BY date(sale_date)
+           ORDER BY d"""
+    ).fetchall()
+    daily_map = {r["d"]: (r["total"], r["cnt"]) for r in daily_rows}
+
+    from datetime import datetime as _dt, timedelta as _td
+    labels, revenue_data, txn_data = [], [], []
+    today = _dt.now()
+    for i in range(6, -1, -1):
+        day = (today - _td(days=i)).strftime("%Y-%m-%d")
+        labels.append((today - _td(days=i)).strftime("%a"))
+        total, cnt = daily_map.get(day, (0, 0))
+        revenue_data.append(round(float(total), 2))
+        txn_data.append(int(cnt))
+
+    top_products = conn.execute(
+        """SELECT p.name, SUM(si.quantity) qty
+           FROM sale_items si
+           JOIN products p ON p.product_id = si.product_id
+           GROUP BY si.product_id
+           ORDER BY qty DESC
+           LIMIT 5"""
+    ).fetchall()
+    top_labels = [r["name"] for r in top_products]
+    top_qty = [int(r["qty"]) for r in top_products]
+
+    chart_data = {
+        "labels": labels,
+        "revenue": revenue_data,
+        "transactions": txn_data,
+        "top_labels": top_labels,
+        "top_qty": top_qty,
+    }
+    # --------------------------------
+
     conn.close()
-    return render_template("dashboard.html", stats=stats, low=low, recent=recent)
+    return render_template(
+        "dashboard.html",
+        stats=stats,
+        low=low,
+        recent=recent,
+        chart_data=chart_data,
+    )
 
 # ---------- Inventory ----------
 @app.route("/inventory")
@@ -144,7 +193,6 @@ def inventory():
             "SELECT * FROM products WHERE is_active=1 ORDER BY name"
         ).fetchall()
     conn.close()
-    # Convert sqlite3.Row objects to plain dicts so Jinja's |tojson works
     products = [dict(r) for r in rows]
     return render_template("inventory.html", products=products, q=q)
 
@@ -214,7 +262,6 @@ def edit_product(pid):
                WHERE product_id=?""",
             (data["name"], str(data["price"]), data["stock"], int(reorder), pid)
         )
-        # Record stock movement if changed
         diff = data["stock"] - old["stock_quantity"]
         if diff != 0:
             conn.execute(
