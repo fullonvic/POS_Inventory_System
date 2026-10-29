@@ -12,24 +12,46 @@
   <div class="card stat">
     <div class="stat-label">Active Products</div>
     <div class="stat-value">{{ stats.product_count }}</div>
-    <div class="stat-icon blue">▣</div>
+    <div class="stat-icon blue">&#9635;</div>
   </div>
   <div class="card stat">
     <div class="stat-label">Low Stock Items</div>
     <div class="stat-value {% if stats.low_stock > 0 %}warn{% endif %}">{{ stats.low_stock }}</div>
-    <div class="stat-icon orange">⚠</div>
+    <div class="stat-icon orange">&#9888;</div>
   </div>
   <div class="card stat">
     <div class="stat-label">Today's Sales</div>
-    <div class="stat-value">₱{{ '%.2f'|format(stats.today_sales) }}</div>
-    <div class="stat-icon green">₱</div>
+    <div class="stat-value">&#8369;{{ '%.2f'|format(stats.today_sales) }}</div>
+    <div class="stat-icon green">&#8369;</div>
   </div>
   <div class="card stat">
     <div class="stat-label">Today's Transactions</div>
     <div class="stat-value">{{ stats.today_txn }}</div>
-    <div class="stat-icon purple">✓</div>
+    <div class="stat-icon purple">&#10003;</div>
   </div>
 </section>
+
+<!-- ============ CHARTS ============ -->
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      <h2>Revenue &amp; Transactions (Last 7 Days)</h2>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Top 5 Best-Selling Products</h2>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="topProductsChart"></canvas>
+    </div>
+  </section>
+</div>
+<!-- ================================= -->
 
 <div class="grid-2">
   <section class="card">
@@ -52,7 +74,7 @@
         </tbody>
       </table>
     {% else %}
-      <div class="empty">✓ All products are sufficiently stocked.</div>
+      <div class="empty">&#10003; All products are sufficiently stocked.</div>
     {% endif %}
   </section>
 
@@ -70,7 +92,7 @@
             <td>#{{ s.sale_id }}</td>
             <td>{{ s.sale_date[:16].replace('T',' ') }}</td>
             <td>{{ s.username }}</td>
-            <td>₱{{ s.total_amount }}</td>
+            <td>&#8369;{{ s.total_amount }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -80,4 +102,133 @@
     {% endif %}
   </section>
 </div>
+
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script id="chart-data" type="application/json">{{ chart_data|tojson }}</script>
+<script>
+(function () {
+  const dataEl = document.getElementById('chart-data');
+  const data = JSON.parse(dataEl.textContent);
+
+  // ---------- Revenue & Transactions ----------
+  const rCanvas = document.getElementById('revenueChart');
+  const rCtx = rCanvas.getContext('2d');
+  const rGradient = rCtx.createLinearGradient(0, 0, 0, 300);
+  rGradient.addColorStop(0, 'rgba(79, 70, 229, 0.35)');
+  rGradient.addColorStop(1, 'rgba(79, 70, 229, 0.02)');
+
+  new Chart(rCtx, {
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Revenue (P)',
+          data: data.revenue,
+          borderColor: '#4f46e5',
+          backgroundColor: rGradient,
+          borderWidth: 3,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#4f46e5',
+          pointBorderWidth: 3,
+          yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: 'Transactions',
+          data: data.transactions,
+          backgroundColor: 'rgba(16, 185, 129, 0.75)',
+          borderRadius: 6,
+          barThickness: 18,
+          yAxisID: 'y1',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true, padding: 16 } },
+        tooltip: {
+          padding: 10,
+          callbacks: {
+            label: function (ctx) {
+              if (ctx.dataset.label.indexOf('Revenue') !== -1) {
+                return ' Revenue: P' + Number(ctx.parsed.y).toFixed(2);
+              }
+              return ' Transactions: ' + ctx.parsed.y;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          position: 'left',
+          title: { display: true, text: 'Revenue (P)', color: '#6b7280', font: { size: 11, weight: '600' } },
+          grid: { color: '#f1f5f9' },
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          title: { display: true, text: 'Transactions', color: '#6b7280', font: { size: 11, weight: '600' } },
+          grid: { drawOnChartArea: false },
+          ticks: { precision: 0 },
+        },
+        x: { grid: { display: false } },
+      },
+    },
+  });
+
+  // ---------- Top 5 Products ----------
+  const tCanvas = document.getElementById('topProductsChart');
+  if (!data.top_labels || data.top_labels.length === 0) {
+    tCanvas.parentElement.innerHTML =
+      '<div class="empty">No sales yet. Best-sellers will appear here.</div>';
+  } else {
+    const tCtx = tCanvas.getContext('2d');
+    new Chart(tCtx, {
+      type: 'bar',
+      data: {
+        labels: data.top_labels,
+        datasets: [{
+          label: 'Units Sold',
+          data: data.top_qty,
+          backgroundColor: [
+            'rgba(79, 70, 229, 0.85)',
+            'rgba(139, 92, 246, 0.85)',
+            'rgba(59, 130, 246, 0.85)',
+            'rgba(16, 185, 129, 0.85)',
+            'rgba(245, 158, 11, 0.85)',
+          ],
+          borderRadius: 8,
+          barThickness: 22,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            padding: 10,
+            callbacks: { label: function (ctx) { return ' ' + ctx.parsed.x + ' units'; } },
+          },
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+          y: { grid: { display: false } },
+        },
+      },
+    });
+  }
+})();
+</script>
 {% endblock %}
